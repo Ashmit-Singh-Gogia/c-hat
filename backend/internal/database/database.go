@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/ashmit-singh-gogia/c-hat/internal/config"
+	"github.com/ashmit-singh-gogia/c-hat/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -20,4 +21,5 @@ func ConnectDB(cfg *config.Config) {
 		log.Fatalf("Error : %q", err)
 	}
 	DB = db
+	DB.AutoMigrate(&models.User{})
 }
