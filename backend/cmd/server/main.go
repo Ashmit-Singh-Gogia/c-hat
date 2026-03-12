@@ -17,10 +17,15 @@ func main() {
 
 	cfg := config.LoadConfig()
 	database.ConnectDB(cfg)
-	repo := repositories.NewUserRepository(database.DB)
-	service := services.NewUserService(repo)
-	handler := handlers.NewUserHandler(service)
-	routes.LoadRoutes(router, handler)
+	userRepo := repositories.NewUserRepository(database.DB)
+	userService := services.NewUserService(userRepo)
+	userHandler := handlers.NewUserHandler(userService)
+
+	chatRepo := repositories.NewChatRepository(database.DB)
+	chatService := services.NewChatService(chatRepo)
+	chatHandler := handlers.NewChatHandler(chatService)
+
+	routes.LoadRoutes(router, userHandler, chatHandler)
 	fmt.Println("Server running on port", cfg.PORT)
 	if err := router.Run(":" + cfg.PORT); err != nil {
 		panic(err)

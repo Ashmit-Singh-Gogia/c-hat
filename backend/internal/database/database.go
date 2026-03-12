@@ -12,7 +12,6 @@ import (
 var DB *gorm.DB
 
 func ConnectDB(cfg *config.Config) {
-	// https://github.com/go-gorm/postgres
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  cfg.DATABASE_URL,
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
@@ -22,4 +21,6 @@ func ConnectDB(cfg *config.Config) {
 	}
 	DB = db
 	DB.AutoMigrate(&models.User{})
+	DB.AutoMigrate(&models.ChatParticipant{})
+	DB.AutoMigrate(&models.Chat{})
 }

@@ -5,9 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadRoutes(router *gin.Engine, handler *handlers.UserHandler) {
+func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandler *handlers.ChatHandler) {
 
 	api := router.Group("/api")
 	users := api.Group("/users") // creates a user subgroup inside the api group
-	users.POST("/", handler.RegisterUser)
+	users.POST("/", userHandler.RegisterUser)
+
+	chats := api.Group("/chats")
+	chats.POST("/direct", chatHandler.CreateDirectChat)
 }
