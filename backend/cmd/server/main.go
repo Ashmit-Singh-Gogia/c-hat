@@ -25,7 +25,11 @@ func main() {
 	chatService := services.NewChatService(chatRepo)
 	chatHandler := handlers.NewChatHandler(chatService)
 
-	routes.LoadRoutes(router, userHandler, chatHandler)
+	messageRepo := repositories.NewMessageRepository(database.DB)
+	messageService := services.NewMessageService(messageRepo)
+	messageHandler := handlers.NewMessageHandler(messageService)
+
+	routes.LoadRoutes(router, userHandler, chatHandler, messageHandler)
 	fmt.Println("Server running on port", cfg.PORT)
 	if err := router.Run(":" + cfg.PORT); err != nil {
 		panic(err)

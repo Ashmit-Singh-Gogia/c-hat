@@ -23,4 +23,5 @@ func ConnectDB(cfg *config.Config) {
 	DB.AutoMigrate(&models.User{})
 	DB.AutoMigrate(&models.ChatParticipant{})
 	DB.AutoMigrate(&models.Chat{})
+	DB.AutoMigrate(&models.Message{})
 }
