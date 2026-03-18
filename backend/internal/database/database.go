@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/ashmit-singh-gogia/c-hat/internal/config"
@@ -20,8 +21,20 @@ func ConnectDB(cfg *config.Config) {
 		log.Fatalf("Error : %q", err)
 	}
 	DB = db
-	DB.AutoMigrate(&models.User{})
-	DB.AutoMigrate(&models.ChatParticipant{})
-	DB.AutoMigrate(&models.Chat{})
-	DB.AutoMigrate(&models.Message{})
+	if err := DB.AutoMigrate(&models.User{}); err != nil {
+		fmt.Printf("error: %s", err.Error())
+		return
+	}
+	if err := DB.AutoMigrate(&models.ChatParticipant{}); err != nil {
+		fmt.Printf("error: %s", err.Error())
+		return
+	}
+	if err := DB.AutoMigrate(&models.Chat{}); err != nil {
+		fmt.Printf("error: %s", err.Error())
+		return
+	}
+	if err := DB.AutoMigrate(&models.Message{}); err != nil {
+		fmt.Printf("error: %s", err.Error())
+		return
+	}
 }

@@ -19,7 +19,7 @@ func NewUserService(repo *repositories.UserRepository) *UserService {
 func (s *UserService) RegisterUser(username string) (models.User, error) {
 	_, err := s.repo.GetUserByUsername(username)
 	if err == nil { // error nil means already user exists
-		return models.User{}, errors.New("User already exists")
+		return models.User{}, errors.New("user already exists")
 	}
 	// but if any other error except this there is an issue
 	if !errors.Is(err, gorm.ErrRecordNotFound) {

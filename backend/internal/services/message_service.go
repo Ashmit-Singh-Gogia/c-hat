@@ -19,7 +19,7 @@ func NewMessageService(repo *repositories.MessageRepository) *MessageService {
 
 func (service *MessageService) SendMessage(chatId uint, senderId uint, content string) (models.Message, error) {
 	if content == "" {
-		return models.Message{}, errors.New("Message must not be empty")
+		return models.Message{}, errors.New("message must not be empty")
 	}
 	message, err := service.repo.CreateMessage(chatId, senderId, content)
 	if err != nil {
