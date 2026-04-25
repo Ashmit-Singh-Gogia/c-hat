@@ -31,6 +31,13 @@ func (r *UserRepository) GetUserByUsername(username string) (models.User, error)
 	}
 	return user, nil
 }
+func (r *UserRepository) FindByGoogleId(googleID string) (models.User, error) {
+	var user = models.User{}
+	if err := r.DB.Where("google_id = ?", googleID).First(&user).Error; err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
 
 func (r *UserRepository) GetUserByID(id uint) (models.User, error) {
 	var user = models.User{}

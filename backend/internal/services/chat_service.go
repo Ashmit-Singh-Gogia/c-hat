@@ -17,23 +17,38 @@ func NewChatService(repo *repositories.ChatRepository) *ChatService {
 	}
 }
 func (c *ChatService) CreateDirectChat(user1ID uint, user2ID uint) (models.Chat, error) {
+	if user1ID == 0 {
+		return models.Chat{}, errors.New("id is 0 for user 1")
+	}
+	if user2ID == 0 {
+		return models.Chat{}, errors.New("id is 0 for user 2")
+	}
 	if user1ID == user2ID {
 		return models.Chat{}, errors.New("cannot create chat with yourself")
 	}
+
 	tx := c.repo.DB.Begin()
 	chat, err := c.repo.CreateChat(tx, false)
 	if err != nil {
 		tx.Rollback()
 		return models.Chat{}, err
 	}
+
 	userIDs := []uint{user1ID, user2ID}
 	err = c.repo.AddParticipants(tx, chat.ID, userIDs)
 	if err != nil {
 		tx.Rollback()
 		return models.Chat{}, err
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		return models.Chat{}, err
 	}
+
+	// Reload chat with participants after commit
+	if err := c.repo.DB.Preload("Participants").First(&chat, chat.ID).Error; err != nil {
+		return models.Chat{}, err
+	}
+
 	return chat, nil
 }

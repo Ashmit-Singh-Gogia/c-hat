@@ -16,12 +16,26 @@ func NewChatHandler(service *services.ChatService) *ChatHandler {
 }
 
 type chatStruct struct {
-	Uid1 uint `json:"uid1"`
-	Uid2 uint `json:"uid2"`
+	Uid uint `json:"uid"`
 }
 
 func (handler *ChatHandler) CreateDirectChat(c *gin.Context) {
-	chatStr := chatStruct{}
+	userId, ok := c.Get("userID") // main users id, from the token
+	if !ok {
+		c.JSON(401, gin.H{
+			"Error": "Unauthorized",
+		})
+		return
+	}
+	id, ok := userId.(uint)
+	if !ok {
+		c.JSON(400, gin.H{
+			"Error": "Invalid user ID",
+		})
+		return
+	}
+
+	chatStr := chatStruct{} // to get the 2nd user's id
 	err := c.ShouldBindJSON(&chatStr)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -29,7 +43,7 @@ func (handler *ChatHandler) CreateDirectChat(c *gin.Context) {
 		})
 		return
 	}
-	chat, err := handler.service.CreateDirectChat(chatStr.Uid1, chatStr.Uid2)
+	chat, err := handler.service.CreateDirectChat(id, chatStr.Uid)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"Error": err.Error(),
@@ -40,4 +54,5 @@ func (handler *ChatHandler) CreateDirectChat(c *gin.Context) {
 		"chat created": chat,
 		"message":      "success",
 	})
+
 }

@@ -39,3 +39,9 @@ func (repo *MessageRepository) GetMessagesByChatID(chatID uint) ([]models.Messag
 
 	return messages, nil
 }
+
+func (repo *MessageRepository) GetChatByID(chatID uint) (*models.Chat, error) {
+	var chat models.Chat
+	err := repo.DB.Preload("Participants").First(&chat, chatID).Error
+	return &chat, err
+}

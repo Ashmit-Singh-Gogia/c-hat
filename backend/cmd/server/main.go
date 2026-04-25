@@ -15,8 +15,10 @@ import (
 func main() {
 	router := gin.Default()
 
-	cfg := config.LoadConfig()
-	database.ConnectDB(cfg)
+	Cfg := config.LoadConfig() // the env vars are initialized inside this method
+	config.InitOAuth(Cfg)      // the oauth config is initialized inside this method
+
+	database.ConnectDB(Cfg)
 	userRepo := repositories.NewUserRepository(database.DB)
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
@@ -29,9 +31,12 @@ func main() {
 	messageService := services.NewMessageService(messageRepo)
 	messageHandler := handlers.NewMessageHandler(messageService)
 
-	routes.LoadRoutes(router, userHandler, chatHandler, messageHandler)
-	fmt.Println("Server running on port", cfg.PORT)
-	if err := router.Run(":" + cfg.PORT); err != nil {
+	authService := services.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authService, Cfg)
+
+	routes.LoadRoutes(router, userHandler, chatHandler, messageHandler, authHandler)
+	fmt.Println("Server running on port", Cfg.PORT)
+	if err := router.Run(":" + Cfg.PORT); err != nil {
 		panic(err)
 	}
 }
