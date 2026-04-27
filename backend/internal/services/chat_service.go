@@ -52,3 +52,9 @@ func (c *ChatService) CreateDirectChat(user1ID uint, user2ID uint) (models.Chat,
 
 	return chat, nil
 }
+
+// Add this inside chat_servicce.go
+
+func (c *ChatService) GetUserChats(userID uint) ([]models.Chat, error) {
+	return c.repo.FindChatsByUserID(userID)
+}

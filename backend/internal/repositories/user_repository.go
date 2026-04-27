@@ -41,7 +41,7 @@ func (r *UserRepository) FindByGoogleId(googleID string) (models.User, error) {
 
 func (r *UserRepository) GetUserByID(id uint) (models.User, error) {
 	var user = models.User{}
-	if err := r.DB.First(&user).Error; err != nil { // first already searches for primary key no need of where clause
+	if err := r.DB.Where("id = ?", id).First(&user).Error; err != nil { // first already searches for primary key no need of where clause
 		return models.User{}, err
 	}
 	return user, nil

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 
 	"github.com/ashmit-singh-gogia/c-hat/internal/config"
 	"github.com/ashmit-singh-gogia/c-hat/internal/services"
@@ -23,27 +23,37 @@ func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 }
 
 func (h *AuthHandler) GoogleCallback(c *gin.Context) {
+	// FIX: Inject provider context here as well for Chrome
+	ctx := context.WithValue(c.Request.Context(), "provider", "google")
+	c.Request = c.Request.WithContext(ctx)
 
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
-		fmt.Println("Goth error:", err)
-		c.JSON(500, gin.H{"error": "Failed to authenticate user"})
+		c.Redirect(302, "http://localhost:5173/login?error=auth_failed")
 		return
 	}
 
 	appUser, err := h.authService.FindOrCreateUser(user.UserID, user.Email, user.Name, user.AvatarURL)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to process user"})
+		c.Redirect(302, "http://localhost:5173/login?error=user_creation_failed")
 		return
 	}
 
 	token, err := utils.CreateToken(appUser.ID, h.cfg.JWT_SECRET)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to generate token"})
+		c.Redirect(302, "http://localhost:5173/login?error=token_generation_failed")
 		return
 	}
 
-	c.JSON(200, gin.H{"token": token})
+	// 1. Set SameSite policy to Lax so Safari/Chrome don't block the cookie during redirect
+	c.SetSameSite(http.SameSiteLaxMode)
+
+	// 2. Set the HTTP-Only cookie containing the JWT
+	// Format: Name, Value, MaxAge, Path, Domain, Secure, HttpOnly
+	c.SetCookie("jwt_token", token, 3600*24, "/", "", false, true)
+
+	// 3. Redirect straight back to the React app homepage (no token in the URL!)
+	c.Redirect(302, "http://localhost:5173/")
 }
 
 func NewAuthHandler(authService *services.AuthService, cfg *config.Config) *AuthHandler {

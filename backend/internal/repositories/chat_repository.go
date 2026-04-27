@@ -26,6 +26,19 @@ func (c *ChatRepository) CreateChat(tx *gorm.DB, isgroup bool) (models.Chat, err
 	return chat, nil
 }
 
+func (c *ChatRepository) FindChatsByUserID(userID uint) ([]models.Chat, error) {
+	var chats []models.Chat
+
+	// Find all chats where the user's ID is in the chat_participants table
+	err := c.DB.Model(&models.Chat{}).
+		Joins("JOIN chat_participants ON chat_participants.chat_id = chats.id").
+		Where("chat_participants.user_id = ?", userID).
+		Preload("Participants.User"). // Preloads the participants array
+		Find(&chats).Error
+
+	return chats, err
+}
+
 func (c *ChatRepository) AddParticipants(tx *gorm.DB, chatID uint, userIDs []uint) error {
 	var participants []models.ChatParticipant
 	for _, uid := range userIDs {
