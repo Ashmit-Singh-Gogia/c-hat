@@ -35,24 +35,24 @@ func (handler *MessageHandler) SendMessage(c *gin.Context) {
 	err := c.ShouldBindJSON(&message)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error : ": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 	if message.Content == "" {
 		c.JSON(400, gin.H{
-			"error : ": "Content Should not be empty",
+			"error": "Content Should not be empty",
 		})
 		return
 	}
 	newMessage, err := handler.service.SendMessage(message.ChatID, id, message.Content)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error : ": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	c.JSON(201, gin.H{"message : ": newMessage})
+	c.JSON(201, gin.H{"message": newMessage})
 }
 
 func (handler *MessageHandler) GetMessages(c *gin.Context) {
@@ -71,16 +71,16 @@ func (handler *MessageHandler) GetMessages(c *gin.Context) {
 	id, err := strconv.Atoi(chatID)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error : ": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 	messagesResponse, err := handler.service.GetMessagesByChat(uint(id), userid)
 	if err != nil {
 		c.JSON(500, gin.H{
-			"error : ": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	c.JSON(200, gin.H{"messages : ": messagesResponse})
+	c.JSON(200, gin.H{"messages": messagesResponse})
 }

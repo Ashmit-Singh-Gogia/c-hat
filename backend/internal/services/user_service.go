@@ -31,3 +31,9 @@ func (s *UserService) RegisterUser(username string) (models.User, error) {
 	}
 	return user, nil
 }
+
+// Add this inside user_service.go
+
+func (s *UserService) GetUserByID(id uint) (models.User, error) {
+	return s.repo.GetUserByID(id)
+}
