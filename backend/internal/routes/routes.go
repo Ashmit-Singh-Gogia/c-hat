@@ -39,6 +39,7 @@ func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandl
 	protected := api.Group("/")
 	protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
 	{
+		protected.GET("/auth/google/logout", authHandler.GoogleLogout)
 		// Fetch current logged-in user details
 		protected.GET("/users/me", userHandler.GetMe)
 

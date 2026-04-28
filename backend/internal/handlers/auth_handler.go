@@ -56,6 +56,18 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 	c.Redirect(302, "http://localhost:5173/")
 }
 
+func (h *AuthHandler) GoogleLogout(c *gin.Context) {
+	ctx := context.WithValue(c.Request.Context(), "provider", "google")
+	c.Request = c.Request.WithContext(ctx)
+	err := gothic.Logout(c.Writer, c.Request)
+	if err != nil {
+		c.AbortWithError(400, err)
+		return
+	}
+	c.SetCookie("jwt_token", "", -1, "/", "", false, true)
+	c.Redirect(http.StatusFound, "http://localhost:5173/login")
+}
+
 func NewAuthHandler(authService *services.AuthService, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{authService: authService, cfg: cfg}
 }
