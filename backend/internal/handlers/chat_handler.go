@@ -57,8 +57,6 @@ func (handler *ChatHandler) CreateDirectChat(c *gin.Context) {
 
 }
 
-// Add this inside chat_handler.go
-
 func (handler *ChatHandler) GetChats(c *gin.Context) {
 	userID, ok := c.Get("userID")
 	if !ok {
@@ -78,6 +76,5 @@ func (handler *ChatHandler) GetChats(c *gin.Context) {
 		return
 	}
 
-	// Return the raw array so the React frontend maps it correctly
 	c.JSON(200, chats)
 }

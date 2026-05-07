@@ -60,6 +60,5 @@ func (handler *UserHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	// Return the raw user object so the React frontend sets it correctly
 	c.JSON(200, user)
 }
