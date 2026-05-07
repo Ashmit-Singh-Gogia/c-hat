@@ -7,13 +7,8 @@
 ## 📖 What it is 
 
 > **For anyone who's never touched a line of code — this section is for you.**
-
-Imagine your school has a **notice board**, but instead of paper notes, it's digital. When you want to send a message to your friend, you walk up to the board, pin a note, and your friend checks the board a moment later to read it. That's basically how most basic chat apps work — you *post* a message, and the other person *fetches* it when they next look.
-
-**c-hat** is that notice board, but built properly from the ground up. Right now, you sign in with your Google account (so no passwords to remember), and you can send messages to other users and read your conversation history. It's secure — only *you* can access *your* messages, protected by a digital key called a JWT token that the server checks every time.
-
-The next big upgrade (coming soon!) will turn this notice board into a **walkie-talkie** — where messages arrive *instantly* the moment someone sends them, with no need to refresh or wait. That's the power of WebSockets, and it's on the roadmap.
-
+A simple chat app with features like Google oauth and direct messaging available.
+Future scopes mentioned below
 ---
 
 ## ✨ Key Features
@@ -67,27 +62,26 @@ Create a `.env` file in the root of the project by copying the example below.
 
 Then open `.env` and fill in your values:
 
-# ── Server ────────────────────────────────────────────────────────────────────
+# ── Server
 PORT=8082
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# ── Database 
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=your_postgres_user
 DB_PASSWORD=your_postgres_password
 DB_NAME=c_hat_db
 
-# ── Google OAuth ──────────────────────────────────────────────────────────────
+# ── Google OAuth
 # Obtain these from: https://console.cloud.google.com/
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_CALLBACK_URL=http://localhost:8080/auth/google/callback
 
-# ── JWT ───────────────────────────────────────────────────────────────────────
-# Use a long, random, secret string. Do NOT commit your real secret.
+# ── JWT 
 JWT_SECRET=a_very_long_and_random_secret_string
 
-# ── Session ───────────────────────────────────────────────────────────────────
+# ── Session
 SESSION_SECRET=another_random_secret_for_sessions
 
 ### 3. Set Up the Database
