@@ -12,7 +12,7 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
 
-		// 1. First, try to get the token from the HTTP-Only cookie
+		// 1. First, try to get the token from the cookie
 		cookieToken, err := c.Cookie("jwt_token")
 		if err == nil && cookieToken != "" {
 			tokenString = cookieToken
@@ -42,7 +42,6 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 
 		correctedClaims := claims.(*utils.Claims)
 
-		// 4. Inject userID into context for downstream handlers
 		c.Set("userID", correctedClaims.UserID)
 		c.Next()
 	}
