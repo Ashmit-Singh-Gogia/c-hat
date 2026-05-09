@@ -7,6 +7,7 @@ import (
 	"github.com/ashmit-singh-gogia/c-hat/internal/config"
 	"github.com/ashmit-singh-gogia/c-hat/internal/database"
 	"github.com/ashmit-singh-gogia/c-hat/internal/handlers"
+	"github.com/ashmit-singh-gogia/c-hat/internal/providers"
 	"github.com/ashmit-singh-gogia/c-hat/internal/repositories"
 	"github.com/ashmit-singh-gogia/c-hat/internal/routes"
 	"github.com/ashmit-singh-gogia/c-hat/internal/services"
@@ -46,7 +47,10 @@ func main() {
 	messageHandler := handlers.NewMessageHandler(messageService)
 
 	authService := services.NewAuthService(userRepo)
-	authHandler := handlers.NewAuthHandler(authService, Cfg)
+	authManager := services.NewAuthManager()
+	googleProvider := providers.NewGoogleProvider()
+	authManager.RegisterProvider("google", googleProvider)
+	authHandler := handlers.NewAuthHandler(authService, authManager, Cfg)
 
 	routes.LoadRoutes(router, userHandler, chatHandler, messageHandler, authHandler)
 	fmt.Println("Server running on port", Cfg.PORT)

@@ -9,7 +9,7 @@ type User struct {
 	Username   string    `gorm:"not null" json:"username"`
 	Email      string    `gorm:"not null" json:"email"`
 	Avatar     string    `json:"avatar"`
-	Password   string    `json:"-"` // Leave empty for OAuth, use later for Email/Pass
+	Password   string    `json:"-"`
 	CreatedAt  time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt  time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
