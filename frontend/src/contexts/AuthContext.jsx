@@ -1,31 +1,50 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/authService';
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import axios from "axios";
 
-const AuthContext = createContext();
+// Axios instance with HttpOnly cookie support baked in
+export const api = axios.create({
+  withCredentials: true,
+});
 
-export const AuthProvider = ({ children }) => {
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await authService.getMe();
-        setUser(response.data);
-      } catch (error) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
+  const checkAuth = useCallback(async () => {
+    try {
+      const { data } = await api.get("/api/users/me");
+      setUser(data);
+    } catch {
+      // 401 → not authenticated; any other error → treat as unauthenticated
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  // Hard redirect — browser carries the cookie; no JS token handling needed
+  const login = (provider) => {
+    window.location.href = `http://localhost:8082/api/auth/${provider}`;
+  };
+
+  const logout = (provider) => {
+    window.location.href = `http://localhost:8082/api/auth/${provider}/logout`;
+  };
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refetchUser: checkAuth }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
+  return ctx;
+}

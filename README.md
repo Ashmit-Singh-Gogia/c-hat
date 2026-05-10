@@ -2,15 +2,6 @@
 # 💬 c-hat
 </div>
 
----
-
-## 📖 What it is 
-
-> **For anyone who's never touched a line of code — this section is for you.**
-A simple chat app with features like Google oauth and direct messaging available.
-Future scopes mentioned below
----
-
 ## ✨ Key Features
 
 - 🔐 **Google OAuth Login / Logout** — Sign in with your existing Google account. No new passwords.

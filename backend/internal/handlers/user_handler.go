@@ -19,28 +19,6 @@ func NewUserHandler(service *services.UserService) *UserHandler {
 	}
 }
 
-func (handler *UserHandler) RegisterUser(c *gin.Context) {
-	user := CreateUserRequest{}
-	err := c.ShouldBindJSON(&user)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": err.Error(),
-		})
-		return
-	}
-	newUser, err := handler.service.RegisterUser(user.Username)
-	if err != nil {
-		c.JSON(409, gin.H{
-			"Error": err.Error(),
-		})
-		return
-	}
-	c.JSON(201, gin.H{
-		"user created": newUser,
-		"message":      "success",
-	})
-}
-
 func (handler *UserHandler) GetMe(c *gin.Context) {
 	userID, ok := c.Get("userID")
 	if !ok {

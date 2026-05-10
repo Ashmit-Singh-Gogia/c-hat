@@ -1,27 +1,94 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
-import ChatApp from './pages/ChatApp';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { MessageSquare } from "lucide-react";
+import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import Login from "./pages/Login";
+import ChatDashboard from "./pages/ChatDashboard";
 
-function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
+// ─── Full-screen loading state (shown while /api/users/me resolves) ──────────
+function GlobalLoader() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-        <Route path="/" element={user ? <ChatApp /> : <Navigate to="/login" />} />
-      </Routes>
-    </BrowserRouter>
+    <div
+      className="fixed inset-0 flex flex-col items-center justify-center gap-5"
+      style={{ background: "#07070f" }}
+    >
+      {/* Pulsing logo */}
+      <div className="relative">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse"
+          style={{
+            background: "linear-gradient(135deg, #22d3ee 0%, #6366f1 100%)",
+            boxShadow: "0 0 48px rgba(34,211,238,0.25)",
+          }}
+        >
+          <MessageSquare size={30} className="text-white" strokeWidth={1.8} />
+        </div>
+        {/* Orbit ring */}
+        <div
+          className="absolute inset-0 -m-2 rounded-2xl border border-cyan-500/20 animate-ping"
+          style={{ animationDuration: "1.8s" }}
+        />
+      </div>
+
+      <p className="text-slate-600 text-sm tracking-widest uppercase font-medium animate-pulse">
+        c‑hat
+      </p>
+    </div>
   );
 }
 
-export default App;
+// ─── Route guard ─────────────────────────────────────────────────────────────
+// Waits for the auth check to complete before deciding where to send the user.
+function ProtectedRoute({ children }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <GlobalLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// ─── Public route guard ───────────────────────────────────────────────────────
+// Prevents an already-authenticated user from seeing the login page.
+function PublicRoute({ children }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <GlobalLoader />;
+  if (user) return <Navigate to="/" replace />;
+  return children;
+}
+
+// ─── Router tree ─────────────────────────────────────────────────────────────
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <ChatDashboard />
+          </ProtectedRoute>
+        }
+      />
+      {/* Catch-all → home (ProtectedRoute will redirect to login if needed) */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

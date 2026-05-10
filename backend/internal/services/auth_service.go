@@ -16,23 +16,28 @@ func NewAuthService(userRepo *repositories.UserRepository) *AuthService {
 	return &AuthService{userRepo: userRepo} // ← initialize the service with the repo
 }
 
-func (s *AuthService) FindOrCreateUser(googleID, email, name, avatar string) (*models.User, error) {
-	user, err := s.userRepo.FindByGoogleId(googleID)
+func (s *AuthService) FindOrCreateUser(dto *UserDTO) (*models.User, error) {
+	user, err := s.userRepo.FindByProvider(dto.Provider, dto.ProviderID)
 	if err == nil {
 		return &user, nil
 	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		createdUser, err := s.userRepo.CreateUser(name)
-		if err != nil {
-			return nil, err
-		}
-		createdUser.GoogleID = googleID
-		createdUser.Email = email
-		createdUser.Avatar = avatar
-		if err := s.userRepo.DB.Save(&createdUser).Error; err != nil {
-			return nil, err
-		}
-		return &createdUser, nil
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
-	return nil, errors.New("failed to find or create user")
+	// user doesn't exist → create a new one
+	user = models.User{
+		Provider:   dto.Provider,
+		ProviderID: dto.ProviderID,
+		Username:   dto.Username,
+		Email:      dto.Email,
+		Avatar:     dto.Avatar,
+	}
+	if err := s.userRepo.CreateUser(&user); err != nil {
+		return nil, errors.New("failed to create new user")
+	}
+	return &user, nil
+}
+
+func (s *AuthService) ProcessUserLogin(dto *UserDTO) (*models.User, error) {
+	return s.FindOrCreateUser(dto)
 }

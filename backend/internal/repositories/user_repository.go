@@ -15,15 +15,6 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	}
 }
 
-func (r *UserRepository) CreateUser(username string) (models.User, error) {
-	user := models.User{Username: username}
-	result := r.DB.Create(&user)
-	if result.Error != nil {
-		return models.User{}, result.Error
-	}
-	return user, nil
-}
-
 func (r *UserRepository) GetUserByUsername(username string) (models.User, error) {
 	var user = models.User{}
 	if err := r.DB.Where("username = ?", username).First(&user).Error; err != nil {
@@ -31,9 +22,10 @@ func (r *UserRepository) GetUserByUsername(username string) (models.User, error)
 	}
 	return user, nil
 }
-func (r *UserRepository) FindByGoogleId(googleID string) (models.User, error) {
+
+func (r *UserRepository) FindByProvider(provider string, providerID string) (models.User, error) {
 	var user = models.User{}
-	if err := r.DB.Where("google_id = ?", googleID).First(&user).Error; err != nil {
+	if err := r.DB.Where("provider = ? AND provider_id = ?", provider, providerID).First(&user).Error; err != nil {
 		return models.User{}, err
 	}
 	return user, nil
@@ -45,4 +37,8 @@ func (r *UserRepository) GetUserByID(id uint) (models.User, error) {
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func (r *UserRepository) CreateUser(user *models.User) error {
+	return r.DB.Create(user).Error
 }
