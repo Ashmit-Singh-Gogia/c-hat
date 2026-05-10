@@ -46,7 +46,7 @@ func (h *AuthHandler) HandleCallback(c *gin.Context) {
 		c.Redirect(http.StatusFound, "http://localhost:5173/login?error=invalid_provider")
 		return
 	}
-	appUser, err := h.authService.FindOrCreateUser(userDTO.ProviderID, userDTO.Email, userDTO.Username, userDTO.Avatar)
+	appUser, err := h.authService.ProcessUserLogin(userDTO)
 	if err != nil {
 		c.Redirect(http.StatusFound, "http://localhost:5173/login?error=user_creation_failed")
 		return
@@ -58,7 +58,19 @@ func (h *AuthHandler) HandleCallback(c *gin.Context) {
 	}
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("jwt_token", token, 3600*24, "/", "", false, true)
-	c.Redirect(http.StatusPermanentRedirect, "http://localhost:5173/")
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(http.StatusOK, `
+    <!DOCTYPE html>
+    <html>
+        <head><title>Authenticating...</title></head>
+        <body>
+            <script>
+                // Instantly redirect to the frontend via JavaScript
+                window.location.href = "http://localhost:5173/";
+            </script>
+        </body>
+    </html>
+`)
 
 }
 
@@ -70,4 +82,8 @@ func (h *AuthHandler) HandleLogout(c *gin.Context) {
 		return
 	}
 	provider.Logout(c)
+	// Clear the JWT cookie
+	c.SetCookie("jwt_token", "", -1, "/", "", false, true)
+	// Send user back to frontend
+	c.Redirect(http.StatusFound, "http://localhost:5173/login")
 }

@@ -19,6 +19,12 @@ type chatStruct struct {
 	Uid uint `json:"uid"`
 }
 
+type ChatResponse struct {
+	ID      uint   `json:"id"`
+	Name    string `json:"name"`
+	IsGroup bool   `json:"is_group"`
+}
+
 func (handler *ChatHandler) CreateDirectChat(c *gin.Context) {
 	userId, ok := c.Get("userID") // main users id, from the token
 	if !ok {
@@ -50,11 +56,15 @@ func (handler *ChatHandler) CreateDirectChat(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(201, gin.H{
-		"chat created": chat,
-		"message":      "success",
-	})
 
+	name := ""
+	for _, p := range chat.Participants {
+		if p.UserID != id {
+			name = p.User.Username
+			break
+		}
+	}
+	c.JSON(201, ChatResponse{ID: chat.ID, Name: name, IsGroup: chat.IsGroup})
 }
 
 func (handler *ChatHandler) GetChats(c *gin.Context) {
@@ -76,5 +86,18 @@ func (handler *ChatHandler) GetChats(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, chats)
+	result := make([]ChatResponse, 0, len(chats))
+	for _, chat := range chats {
+		name := "Group Chat"
+		if !chat.IsGroup {
+			for _, p := range chat.Participants {
+				if p.UserID != id {
+					name = p.User.Username
+					break
+				}
+			}
+		}
+		result = append(result, ChatResponse{ID: chat.ID, Name: name, IsGroup: chat.IsGroup})
+	}
+	c.JSON(200, result)
 }

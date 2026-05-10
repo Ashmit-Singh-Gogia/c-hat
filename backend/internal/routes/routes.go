@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"os"
-
 	"github.com/ashmit-singh-gogia/c-hat/internal/handlers"
 	"github.com/ashmit-singh-gogia/c-hat/internal/middleware"
 	"github.com/gin-gonic/gin"
@@ -27,19 +25,15 @@ func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandl
 
 	api := router.Group("/api")
 
-	// Google OAuth routes
-	api.GET("/auth/google", authHandler.GoogleLogin)
-	api.GET("/auth/google/callback", authHandler.GoogleCallback)
-
-	// User registration route
-	users := api.Group("/users") // creates a user subgroup inside the api group
-	users.POST("/", userHandler.RegisterUser)
-
+	// OAuth routes
+	api.GET("/auth/:provider", authHandler.HandleLogin)
+	api.GET("/auth/:provider/callback", authHandler.HandleCallback)
 	// Protected routes
 	protected := api.Group("/")
-	protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
+	// protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
+	protected.Use(middleware.AuthMiddleware("YIGcrinLS03WXbSWeU5mEfLhuDAdY6wemkuf6Qb2zcI="))
 	{
-		protected.GET("/auth/google/logout", authHandler.GoogleLogout)
+		protected.GET("/auth/:provider/logout", authHandler.HandleLogout)
 		// Fetch current logged-in user details
 		protected.GET("/users/me", userHandler.GetMe)
 

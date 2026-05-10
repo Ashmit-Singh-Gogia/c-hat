@@ -52,7 +52,7 @@ func (handler *MessageHandler) SendMessage(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(201, gin.H{"message": newMessage})
+	c.JSON(201, newMessage)
 }
 
 func (handler *MessageHandler) GetMessages(c *gin.Context) {
@@ -82,5 +82,5 @@ func (handler *MessageHandler) GetMessages(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(200, gin.H{"messages": messagesResponse})
+	c.JSON(200, messagesResponse)
 }
