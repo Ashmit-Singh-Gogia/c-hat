@@ -31,6 +31,7 @@ func (s *AuthService) FindOrCreateUser(dto *UserDTO) (*models.User, error) {
 		Username:   dto.Username,
 		Email:      dto.Email,
 		Avatar:     dto.Avatar,
+		IsVerified: true, // since we trust the provider, we can mark the user as verified
 	}
 	if err := s.userRepo.CreateUser(&user); err != nil {
 		return nil, errors.New("failed to create new user")
