@@ -21,10 +21,6 @@ func ConnectDB(cfg *config.Config) {
 		log.Fatalf("Error : %q", err)
 	}
 	DB = db
-	// db.Migrator().DropTable(&models.User{})
-	// db.Migrator().DropTable(&models.ChatParticipant{})
-	// db.Migrator().DropTable(&models.Chat{})
-	// db.Migrator().DropTable(&models.Message{})
 	if err := DB.AutoMigrate(&models.User{}); err != nil {
 		fmt.Printf("error: %s", err.Error())
 		return
