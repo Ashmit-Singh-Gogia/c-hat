@@ -3,7 +3,8 @@ import {
   Search, Plus, Settings, LogOut, Send, Paperclip,
   Smile, MoreVertical, Phone, Video, Circle,
 } from "lucide-react";
-import { useAuth, api } from "../contexts/AuthContext.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { chatService } from "../services/chatService";
 
 function StatusDot({ status }) {
   const colors = { online: "bg-emerald-400", away: "bg-amber-400", offline: "bg-slate-600", group: "bg-violet-400" };
@@ -76,7 +77,7 @@ export default function ChatDashboard() {
 
   // Fetch sidebar chats
   useEffect(() => {
-    api.get("/api/chats/")
+    chatService.getChats()
       .then(res => setChats(res.data.map(c => ({
         ...c,
         initials: toInitials(c.name),
@@ -93,7 +94,7 @@ export default function ChatDashboard() {
   useEffect(() => {
     if (!activeChat) return;
     setLoading(true);
-    api.get(`/api/chats/${activeChat.id}/messages`)
+    chatService.getMessages(activeChat.id)
       .then(res => setMessages(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -119,7 +120,7 @@ export default function ChatDashboard() {
     setMessages(prev => [...prev, optimistic]);
 
     try {
-      const res = await api.post("/api/messages/", { chat_id: activeChat.id, content });
+      const res = await chatService.sendMessage(activeChat.id, content)
       // Replace optimistic with real message
       setMessages(prev => prev.map(m => m.id === optimistic.id ? res.data : m));
     } catch (err) {
@@ -173,7 +174,7 @@ export default function ChatDashboard() {
             onClick={() => {
   const uid = prompt("Enter the User ID to start a chat:");
   if (!uid || isNaN(uid)) return;
-  api.post("/api/chats/direct", { uid: parseInt(uid) })
+  chatService.createDirectChat(uid)
     .then(res => {
       const chat = res.data;
       const formatted = {

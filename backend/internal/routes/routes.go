@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"os"
+
 	"github.com/ashmit-singh-gogia/c-hat/internal/handlers"
 	"github.com/ashmit-singh-gogia/c-hat/internal/middleware"
 	"github.com/gin-gonic/gin"
@@ -31,7 +33,7 @@ func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandl
 	// Protected routes
 	protected := api.Group("/")
 	// protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
-	protected.Use(middleware.AuthMiddleware("YIGcrinLS03WXbSWeU5mEfLhuDAdY6wemkuf6Qb2zcI="))
+	protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
 	{
 		protected.GET("/auth/:provider/logout", authHandler.HandleLogout)
 		// Fetch current logged-in user details

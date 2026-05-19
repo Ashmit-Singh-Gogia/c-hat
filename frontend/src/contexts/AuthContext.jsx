@@ -1,10 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import axios from "axios";
-
-// Axios instance with HttpOnly cookie support baked in
-export const api = axios.create({
-  withCredentials: true,
-});
+import { apiClient as api } from "../api/client";
 
 const AuthContext = createContext(null);
 
@@ -14,7 +9,7 @@ export function AuthProvider({ children }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const { data } = await api.get("/api/users/me");
+      const { data } = await api.get("/users/me");
       setUser(data);
     } catch {
       // 401 → not authenticated; any other error → treat as unauthenticated
@@ -30,11 +25,12 @@ export function AuthProvider({ children }) {
 
   // Hard redirect — browser carries the cookie; no JS token handling needed
   const login = (provider) => {
-    window.location.href = `http://localhost:8082/api/auth/${provider}`;
+    // Navigate to the backend auth route via the dev-server proxy
+    window.location.href = `/api/auth/${provider}`;
   };
 
   const logout = (provider) => {
-    window.location.href = `http://localhost:8082/api/auth/${provider}/logout`;
+    window.location.href = `/api/auth/${provider}/logout`;
   };
   return (
     <AuthContext.Provider value={{ user, isLoading, login, logout, refetchUser: checkAuth }}>
