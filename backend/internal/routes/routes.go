@@ -32,7 +32,6 @@ func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandl
 	api.GET("/auth/:provider/callback", authHandler.HandleCallback)
 	// Protected routes
 	protected := api.Group("/")
-	// protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
 	protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
 	{
 		protected.GET("/auth/:provider/logout", authHandler.HandleLogout)

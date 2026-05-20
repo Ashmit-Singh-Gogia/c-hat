@@ -40,8 +40,11 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 			return
 		}
 
-		correctedClaims := claims.(*utils.Claims)
-
+		correctedClaims, ok := claims.(*utils.Claims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
+			return
+		}
 		c.Set("userID", correctedClaims.UserID)
 		c.Next()
 	}

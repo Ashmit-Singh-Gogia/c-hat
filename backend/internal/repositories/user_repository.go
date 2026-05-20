@@ -50,3 +50,11 @@ func (r *UserRepository) GetUserByEmail(email string) (models.User, error) {
 	}
 	return user, nil
 }
+
+func (r *UserRepository) GetUserByVerificationToken(token string) (models.User, error) {
+	var user = models.User{}
+	if err := r.DB.Where("verification_token = ?", token).First(&user).Error; err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}

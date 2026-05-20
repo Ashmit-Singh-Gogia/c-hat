@@ -103,6 +103,55 @@ func (s *AuthService) RegisterLocalUser(username, email, password string) error 
 	return nil
 }
 
+func (s *AuthService) LoginLocalUser(email, password string) (*models.User, error) {
+	cleanedEmail, err := ValidateAndCleanEmail(email)
+	if err != nil {
+		return nil, errors.New("invalid email format")
+	}
+
+	user, err := s.userRepo.GetUserByEmail(cleanedEmail)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user with this email does not exist")
+		}
+		return nil, err
+	}
+
+	if !user.IsVerified {
+		return nil, errors.New("unverified_account")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, errors.New("incorrect password")
+	}
+	// Pass a jwt token or session cookie here in here
+	return &user, nil
+}
+
+func (s *AuthService) VerifyEmail(token string) error {
+	user, err := s.userRepo.GetUserByVerificationToken(token)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("invalid or expired verification token")
+		}
+		return err
+	}
+
+	if user.TokenExpiresAt == nil || time.Now().After(*user.TokenExpiresAt) {
+		return errors.New("verification token has expired")
+	}
+
+	user.IsVerified = true
+	user.VerificationToken = ""
+	user.TokenExpiresAt = nil
+
+	if err := s.userRepo.DB.Save(&user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *AuthService) ResendVerificationEmail(email string) error {
 	cleanedEmail, err := ValidateAndCleanEmail(email)
 	if err != nil {
