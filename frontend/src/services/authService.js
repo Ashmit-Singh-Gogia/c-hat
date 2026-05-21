@@ -1,10 +1,10 @@
 import { apiClient } from '../api/client';
 
 export const authService = {
-  getMe: () => apiClient.get('/users/me'),
-  // Use relative paths so the Vite proxy forwards these to the backend
-  loginUrl: '/api/auth/google',
-  logout: () => {
-    window.location.href = '/api/auth/google/logout';
+  // Axios call clears the cookie on the backend, then we navigate manually.
+  // (Backend handler returns 200 JSON, not a redirect, so window.location alone won't work)
+  logout: async () => {
+    try { await apiClient.get('/auth/logout'); } catch {}
+    window.location.href = '/login';
   }
 };

@@ -31,7 +31,6 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 	provider.Login(c)
-
 }
 
 func (h *AuthHandler) HandleCallback(c *gin.Context) {
@@ -75,16 +74,10 @@ func (h *AuthHandler) HandleCallback(c *gin.Context) {
 }
 
 func (h *AuthHandler) HandleLogout(c *gin.Context) {
-	p := c.Param("provider")
-	provider, err := h.authManager.GetProvider(p)
-	if err != nil {
-		c.AbortWithError(400, err)
-		return
-	}
-	provider.Logout(c)
 	// Clear the JWT cookie
 	c.SetCookie("jwt_token", "", -1, "/", "", false, true)
-	// Send user back to frontend
+	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
+	// redirect to the login page
 	c.Redirect(http.StatusFound, "http://localhost:5173/login")
 }
 

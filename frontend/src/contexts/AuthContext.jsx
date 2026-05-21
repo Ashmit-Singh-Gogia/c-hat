@@ -12,7 +12,6 @@ export function AuthProvider({ children }) {
       const { data } = await api.get("/users/me");
       setUser(data);
     } catch {
-      // 401 → not authenticated; any other error → treat as unauthenticated
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -23,17 +22,50 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, [checkAuth]);
 
-  // Hard redirect — browser carries the cookie; no JS token handling needed
+  // OAuth — hard redirect through Vite proxy
   const login = (provider) => {
-    // Navigate to the backend auth route via the dev-server proxy
-    window.location.href = `/api/auth/${provider}`;
+    window.location.href = `/api/auth/oauth/${provider}`;
   };
 
-  const logout = (provider) => {
-    window.location.href = `/api/auth/${provider}/logout`;
+  // Logout — axios clears cookie, then we navigate manually
+  // (backend returns 200 JSON, not a redirect, so window.location alone won't work)
+  const logout = async () => {
+    try { await api.get("/auth/logout"); } catch {}
+    window.location.href = "/login";
   };
+
+  const localLogin = async (email, password) => {
+    try {
+      await api.post("/auth/local/login", { email, password });
+      await checkAuth();
+      return { success: true };
+    } catch (err) {
+      const errorMsg = err.response?.data?.error;
+      if (errorMsg === "unverified_account") return { success: false, type: "unverified" };
+      return { success: false, type: "invalid_credentials" };
+    }
+  };
+
+  const localRegister = async (username, email, password) => {
+    try {
+      await api.post("/auth/local/register", { username, email, password });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.error || "Registration failed. Please try again." };
+    }
+  };
+
+  const resendVerification = async (email) => {
+    try {
+      await api.post("/auth/local/resend-verification", { email });
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.error || "Failed to resend. Please try again." };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refetchUser: checkAuth }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, localLogin, localRegister, resendVerification, refetchUser: checkAuth }}>
       {children}
     </AuthContext.Provider>
   );
