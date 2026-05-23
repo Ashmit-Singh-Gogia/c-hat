@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"os"
+
 	"github.com/ashmit-singh-gogia/c-hat/internal/handlers"
 	"github.com/ashmit-singh-gogia/c-hat/internal/middleware"
 	"github.com/gin-gonic/gin"
@@ -24,16 +26,22 @@ func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandl
 	})
 
 	api := router.Group("/api")
-
+	auth := api.Group("/auth")
+	oauth := auth.Group("/oauth")
 	// OAuth routes
-	api.GET("/auth/:provider", authHandler.HandleLogin)
-	api.GET("/auth/:provider/callback", authHandler.HandleCallback)
+	oauth.GET("/:provider", authHandler.HandleLogin)
+	oauth.GET("/:provider/callback", authHandler.HandleCallback)
+	// Local auth routes
+	localAuth := auth.Group("/local")
+	localAuth.POST("/register", authHandler.HandleLocalRegister)
+	localAuth.POST("/login", authHandler.HandleLocalLogin)
+	localAuth.POST("/resend-verification", authHandler.HandleResendVerification)
+	localAuth.GET("/verify-email", authHandler.HandleEmailVerification)
 	// Protected routes
 	protected := api.Group("/")
-	// protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
-	protected.Use(middleware.AuthMiddleware("YIGcrinLS03WXbSWeU5mEfLhuDAdY6wemkuf6Qb2zcI="))
+	protected.Use(middleware.AuthMiddleware(os.Getenv("JWT_SECRET")))
 	{
-		protected.GET("/auth/:provider/logout", authHandler.HandleLogout)
+		protected.GET("/auth/logout", authHandler.HandleLogout)
 		// Fetch current logged-in user details
 		protected.GET("/users/me", userHandler.GetMe)
 
