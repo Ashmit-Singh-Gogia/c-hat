@@ -4,14 +4,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
 	"net/mail"
+	"net/smtp"
 	"os"
 	"time"
 
 	"github.com/ashmit-singh-gogia/c-hat/internal/models"
 	"github.com/ashmit-singh-gogia/c-hat/internal/repositories"
-	"github.com/resend/resend-go/v3"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -185,22 +186,18 @@ func (s *AuthService) ResendVerificationEmail(email string) error {
 		return err
 	}
 
-	apiKey := os.Getenv("RESEND_API_KEY")
-
-	client := resend.NewClient(apiKey)
-
-	params := &resend.SendEmailRequest{
-		From:    "onboarding@resend.dev",
-		To:      []string{email},
-		Subject: "Welcome to C-Hat! Please Verify Your Email",
-		Html:    "<p>Welcome to C-Hat! Please verify your email by clicking the link below:</p><p><a href=\"http://localhost:5173/verify-email?token=" + newToken + "\">Verify Email</a></p>",
-	}
-
-	sent, err := client.Emails.Send(params)
+	from := os.Getenv("MAIL")
+	password := os.Getenv("PASSWD")
+	toList := []string{cleanedEmail}
+	host := "smtp.gmail.com"
+	port := "587"
+	msg := fmt.Sprintf("Subject: Email Verification\n\nPlease verify your email by clicking the following link: http://localhost:5173/verify-email?token=%s", newToken)
+	body := []byte(msg)
+	auth := smtp.PlainAuth("", from, password, host)
+	err = smtp.SendMail(host+":"+port, auth, from, toList, body)
 	if err != nil {
-		log.Printf("CRITICAL: User saved, but failed to send email to %s: %v", email, err)
-	} else {
-		log.Printf("email sent: %s", sent.Id)
+		fmt.Printf("Failed to send verification email to %s: %v\n", cleanedEmail, err)
+		return fmt.Errorf("failed to send verification email: %v", err)
 	}
 	return nil
 }

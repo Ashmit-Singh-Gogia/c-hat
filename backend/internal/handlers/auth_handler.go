@@ -96,7 +96,19 @@ func (h *AuthHandler) HandleLocalRegister(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
+	err = h.authService.ResendVerificationEmail(req.Email)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message":    "User registered, but failed to send verification email. Please click resend.",
+			"email_sent": false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "User registered successfully. Please check your email to verify your account.",
+		"email_sent": true,
+	})
 }
 func (h *AuthHandler) HandleLocalLogin(c *gin.Context) {
 	var req struct {
