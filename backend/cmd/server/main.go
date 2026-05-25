@@ -11,6 +11,7 @@ import (
 	"github.com/ashmit-singh-gogia/c-hat/internal/repositories"
 	"github.com/ashmit-singh-gogia/c-hat/internal/routes"
 	"github.com/ashmit-singh-gogia/c-hat/internal/services"
+	"github.com/ashmit-singh-gogia/c-hat/internal/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth/gothic"
@@ -46,13 +47,18 @@ func main() {
 	messageService := services.NewMessageService(messageRepo)
 	messageHandler := handlers.NewMessageHandler(messageService)
 
+	hub := websocket.NewHub()
+	go hub.Run() // runs forever in background
+
+	wsHandler := handlers.NewWSHandler(hub, messageService)
+
 	authService := services.NewAuthService(userRepo)
 	authManager := services.NewAuthManager()
 	googleProvider := providers.NewGoogleProvider()
 	authManager.RegisterProvider("google", googleProvider)
 	authHandler := handlers.NewAuthHandler(authService, authManager, Cfg)
 
-	routes.LoadRoutes(router, userHandler, chatHandler, messageHandler, authHandler)
+	routes.LoadRoutes(router, userHandler, chatHandler, messageHandler, authHandler, wsHandler)
 	fmt.Println("Server running on port", Cfg.PORT)
 	if err := router.Run(":" + Cfg.PORT); err != nil {
 		panic(err)
