@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Search, Plus, Settings, LogOut, Send, Paperclip,
   Smile, MoreVertical, Phone, Video, Circle,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { chatService } from "../services/chatService";
+
+// IMPORT YOUR NEW WEBSOCKET HOOK HERE
+import { useMessages } from "../hooks/useMessages";
 
 function StatusDot({ status }) {
   const colors = { online: "bg-emerald-400", away: "bg-amber-400", offline: "bg-slate-600", group: "bg-violet-400" };
@@ -54,7 +57,7 @@ function MessageBubble({ msg, currentUserId }) {
           {msg.content}
         </div>
         <span className="text-[11px] text-slate-600 px-1">
-          {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
         </span>
       </div>
     </div>
@@ -63,17 +66,18 @@ function MessageBubble({ msg, currentUserId }) {
 
 const COLORS = ["#22d3ee","#a78bfa","#34d399","#f472b6","#fb923c","#60a5fa"];
 function chatColor(id) { return COLORS[id % COLORS.length]; }
-function toInitials(name = "") { return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(); }
+function toInitials(name = "") { return (name || "").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(); }
 
 export default function ChatDashboard() {
   const { user, logout } = useAuth();
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
+
+  // THIS IS THE BRAIN OF YOUR COMPONENT NOW. 
+  // It handles state, fetching, scrolling, and WebSockets automatically.
+  const { messages, sendMessage, messagesEndRef } = useMessages(activeChat);
 
   // Fetch sidebar chats
   useEffect(() => {
@@ -90,44 +94,11 @@ export default function ChatDashboard() {
       .catch(console.error);
   }, []);
 
-  // Fetch messages when active chat changes
-  useEffect(() => {
-    if (!activeChat) return;
-    setLoading(true);
-    chatService.getMessages(activeChat.id)
-      .then(res => setMessages(res.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [activeChat?.id]);
-
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || !activeChat) return;
     const content = input.trim();
     setInput("");
-
-    // Optimistic update
-    const optimistic = {
-      id: `temp-${Date.now()}`,
-      sender_id: user.id,
-      content,
-      created_at: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, optimistic]);
-
-    try {
-      const res = await chatService.sendMessage(activeChat.id, content)
-      // Replace optimistic with real message
-      setMessages(prev => prev.map(m => m.id === optimistic.id ? res.data : m));
-    } catch (err) {
-      console.error(err);
-      // Rollback on failure
-      setMessages(prev => prev.filter(m => m.id !== optimistic.id));
-    }
+    sendMessage(content); 
   };
 
   const userInitials = toInitials(user?.name);
@@ -172,25 +143,25 @@ export default function ChatDashboard() {
           </div>
           <button
             onClick={() => {
-  const uid = prompt("Enter the User ID to start a chat:");
-  if (!uid || isNaN(uid)) return;
-  chatService.createDirectChat(uid)
-    .then(res => {
-      const chat = res.data;
-      const formatted = {
-        ...chat,
-        initials: toInitials(chat.name),
-        color: chatColor(chat.id),
-        time: "",
-        lastMsg: "",
-        unread: 0,
-        status: chat.is_group ? "group" : "online",
-      };
-      setChats(prev => [formatted, ...prev.filter(x => x.id !== chat.id)]);
-      setActiveChat(formatted);
-    })
-    .catch(err => alert(err.response?.data?.error ?? "Failed to create chat"));
-}}
+              const uid = prompt("Enter the User ID to start a chat:");
+              if (!uid || isNaN(uid)) return;
+              chatService.createDirectChat(uid)
+                .then(res => {
+                  const chat = res.data;
+                  const formatted = {
+                    ...chat,
+                    initials: toInitials(chat.name),
+                    color: chatColor(chat.id),
+                    time: "",
+                    lastMsg: "",
+                    unread: 0,
+                    status: chat.is_group ? "group" : "online",
+                  };
+                  setChats(prev => [formatted, ...prev.filter(x => x.id !== chat.id)]);
+                  setActiveChat(formatted);
+                })
+                .catch(err => alert(err.response?.data?.error ?? "Failed to create chat"));
+            }}
             className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all duration-150 shrink-0"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
             title="New chat">
@@ -236,11 +207,11 @@ export default function ChatDashboard() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-4 scrollbar-hide">
-              {loading
-                ? <p className="text-slate-600 text-sm text-center mt-10">Loading…</p>
-                : messages.map(msg => <MessageBubble key={msg.id} msg={msg} currentUserId={user?.id} />)
-              }
-              <div ref={bottomRef} />
+              {messages.map((msg, idx) => (
+                <MessageBubble key={msg.id || idx} msg={msg} currentUserId={user?.id} />
+              ))}
+              {/* This connects to the hook to auto-scroll */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input bar */}

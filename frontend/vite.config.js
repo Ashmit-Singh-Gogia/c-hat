@@ -7,8 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8082', // Your Go backend
+        target: 'http://localhost:8082', // Your Go backend port
         changeOrigin: true,
+        ws: true, // CRITICAL: This allows WebSockets to pass through
       }
     }
   }

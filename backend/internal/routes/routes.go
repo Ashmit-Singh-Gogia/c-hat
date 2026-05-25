@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandler *handlers.ChatHandler, messageHandler *handlers.MessageHandler, authHandler *handlers.AuthHandler) {
+func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandler *handlers.ChatHandler, messageHandler *handlers.MessageHandler, authHandler *handlers.AuthHandler, wsHandler *handlers.WSHandler) {
 
 	// CORS Middleware to allow React frontend to communicate with Gin backend
 	router.Use(func(c *gin.Context) {
@@ -44,13 +44,11 @@ func LoadRoutes(router *gin.Engine, userHandler *handlers.UserHandler, chatHandl
 		protected.GET("/auth/logout", authHandler.HandleLogout)
 		// Fetch current logged-in user details
 		protected.GET("/users/me", userHandler.GetMe)
+		protected.GET("/ws/:chatId", wsHandler.HandleWS)
 
 		chats := protected.Group("/chats")
 		chats.GET("/", chatHandler.GetChats) // Fetch all chats for sidebar
 		chats.POST("/direct", chatHandler.CreateDirectChat)
 		chats.GET("/:id/messages", messageHandler.GetMessages)
-
-		messages := protected.Group("/messages")
-		messages.POST("/", messageHandler.SendMessage)
 	}
 }
