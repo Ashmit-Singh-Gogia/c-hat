@@ -27,7 +27,10 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 	p := c.Param("provider")
 	provider, err := h.authManager.GetProvider(p)
 	if err != nil {
-		c.AbortWithError(400, err)
+		err := c.AbortWithError(400, err)
+		if err != nil {
+			return
+		}
 		return
 	}
 	provider.Login(c)
@@ -37,7 +40,10 @@ func (h *AuthHandler) HandleCallback(c *gin.Context) {
 	p := c.Param("provider")
 	provider, err := h.authManager.GetProvider(p)
 	if err != nil {
-		c.AbortWithError(400, err)
+		err := c.AbortWithError(400, err)
+		if err != nil {
+			return
+		}
 		return
 	}
 	userDTO, err := provider.Callback(c)

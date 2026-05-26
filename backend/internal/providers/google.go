@@ -1,8 +1,6 @@
 package providers
 
 import (
-	"context"
-
 	"github.com/ashmit-singh-gogia/c-hat/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
@@ -16,15 +14,12 @@ func NewGoogleProvider() *GoogleProvider {
 }
 
 func (g *GoogleProvider) Login(c *gin.Context) {
-	ctx := context.WithValue(c.Request.Context(), "provider", "google")
-	c.Request = c.Request.WithContext(ctx)
+	c.Request = gothic.GetContextWithProvider(c.Request, "google")
 	gothic.BeginAuthHandler(c.Writer, c.Request)
 }
 
 func (g *GoogleProvider) Callback(c *gin.Context) (*services.UserDTO, error) {
-	ctx := context.WithValue(c.Request.Context(), "provider", "google")
-	c.Request = c.Request.WithContext(ctx)
-
+	c.Request = gothic.GetContextWithProvider(c.Request, "google")
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
 		return nil, err
@@ -39,7 +34,6 @@ func (g *GoogleProvider) Callback(c *gin.Context) (*services.UserDTO, error) {
 }
 
 func (g *GoogleProvider) Logout(c *gin.Context) error {
-	ctx := context.WithValue(c.Request.Context(), "provider", "google")
-	c.Request = c.Request.WithContext(ctx)
+	c.Request = gothic.GetContextWithProvider(c.Request, "google")
 	return gothic.Logout(c.Writer, c.Request)
 }

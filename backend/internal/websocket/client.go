@@ -45,13 +45,24 @@ type Client struct {
 func (c *Client) ReadPump() {
 	defer func() {
 		c.Hub.Unregister <- c
-		c.Conn.Close()
+		err := c.Conn.Close()
+		if err != nil {
+			log.Printf("failed to close websocket connection: %v", err)
+		}
 	}()
 
 	c.Conn.SetReadLimit(maxMessageSize)
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	err := c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	if err != nil {
+		log.Printf("failed to set read deadline: %v", err)
+		return
+	}
 	c.Conn.SetPongHandler(func(string) error {
-		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		err := c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			log.Printf("failed to set read deadline: %v", err)
+			return err
+		}
 		return nil
 	})
 
@@ -99,21 +110,39 @@ func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.Conn.Close()
+		err := c.Conn.Close()
+		if err != nil {
+			log.Printf("failed to close websocket connection: %v", err)
+		}
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.Send:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+			err := c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				log.Printf("failed to set write deadline: %v", err)
 				return
 			}
-			c.Conn.WriteMessage(websocket.TextMessage, message)
+			if !ok {
+				err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Printf("failed to write close message: %v", err)
+				}
+				return
+			}
+			err = c.Conn.WriteMessage(websocket.TextMessage, message)
+			if err != nil {
+				log.Printf("failed to write text message: %v", err)
+				return
+			}
 
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			err := c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				log.Printf("failed to set write deadline: %v", err)
+				return
+			}
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
